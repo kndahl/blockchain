@@ -1,10 +1,10 @@
 import datetime as _dt
 import hashlib as _hashlib
-from itertools import chain 
 import json as _json
 from urllib.parse import urlparse
 import requests
-from colors import bcolors
+from tools.colors import bcolors
+from tools.wallet import Wallet
 import time
 import datetime
 
@@ -13,6 +13,7 @@ class Blockchain:
     def __init__(self) -> None:
         self.nodes = set()
         self.chain = list()
+        self.wallet = Wallet()
         self.current_transactions = []
         genesis_block = self.__create_block__(data='Genesis Block', proof=1, prev_hash=0, index=1)
         self.chain.append(genesis_block)
@@ -37,7 +38,7 @@ class Blockchain:
         }
         self.current_transactions.append(data)
         print(f'{bcolors.HEADER}A new transaction has been added to the queue.{bcolors.ENDC}')
-        if len(self.current_transactions) > 3:
+        if len(self.current_transactions) > 0:
             self.__send_trans__()
         return self.__get_prev_block__()['index'] + 1
 
@@ -60,7 +61,7 @@ class Blockchain:
             index=index)
         self.chain.append(block)
         self.current_transactions = []
-        self.__fetch_chain__(data=block)
+        self.__fetch_chain__(data=block) # Let all availables nodes know about this block
         print(f'{bcolors.OKGREEN}Block {index} mined.{bcolors.ENDC}')
         return block
 
@@ -118,7 +119,7 @@ class Blockchain:
         for deal in trans:
             self.current_transactions.append(deal)
         if self.__is_chain_valid__(self.chain):
-            print(f'{bcolors.BOLD}Mining node received transactions.{bcolors.ENDC}')
+            print(f'{bcolors.BOLD}Mining node received transaction.{bcolors.ENDC}')
             return True
         else:
             del self.current_transactions[-len(trans)]

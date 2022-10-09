@@ -1,0 +1,76 @@
+import requests
+from tools.blockchain import Blockchain
+from tools.wallet import Wallet
+from tools.colors import bcolors
+import pandas as pd
+import numpy as np
+import os
+
+class TransactChain():
+    def __init__(self) -> None:
+        self.blockchain = Blockchain()
+        self.wallet = Wallet()
+        self.nodes = ['http://192.168.100.19:8000', 'http://192.168.100.19:8001']
+        self.availables_nodes = self.__get_availables_nodes__()
+        self.sent_node = ''
+
+    def make_transaction(self, sender, recipient, amount):
+        nodes = self.availables_nodes
+        i = 0
+        sent_flag = 0
+        while i < len(nodes):
+            node = nodes[i]
+            port = node.split(':')[-1]
+            if port[-1] == '1':
+                if self.__validate_wallet__(addr=sender) and self.__validate_wallet__(addr=recipient) and self.__validate_balance__(wallet=sender, sum=amount):
+                    req = requests.post(f'http://{node}/transactions/new/', json={'sender': sender, 'recipient': recipient, 'amount': amount})
+                    if req.status_code == 200:
+                        sent_flag = 1
+                        self.sent_node = node
+                        print(f'{bcolors.OKGREEN}Transaction was successfully sent to node {node}.{bcolors.ENDC}')
+                        print(req.json()['message'])
+                        break
+                else:
+                    if not self.__validate_wallet__(addr=sender):
+                        print(f'{bcolors.FAIL}Sender address validation failed.{bcolors.ENDC}')
+                    if not self.__validate_wallet__(addr=recipient):
+                        print(f'{bcolors.FAIL}Recipient address validation failed.{bcolors.ENDC}')
+                    return False
+            i += 1
+        if sent_flag == 0:
+            return False
+        return True
+
+    def deposit(self, addr, sum):
+        self.wallets = self.wallet.__fetch_data__()
+        if self.__validate_wallet__(addr=addr):
+            if self.make_transaction(sender='0', recipient=addr, amount=sum):
+                return True
+        else:
+            print(f'{bcolors.FAIL}Recipient address validation failed.{bcolors.ENDC}')
+        return False
+
+    def __get_availables_nodes__(self):
+        available_nodes = []
+        for node in self.nodes:
+            node = node.split('http://')[-1]
+            response = requests.get(f'http://{node}/chain')
+            if response.status_code == 200:
+                response = requests.get(f'http://{node}/validate/')
+                if response.status_code == 200:
+                    available_nodes.append(node)
+        return available_nodes
+
+    def __validate_wallet__(self, addr):
+        self.wallets = self.wallet.__fetch_data__()
+        return addr in self.wallets['wallet'].to_list()
+
+    def __validate_balance__(self, wallet, sum):
+        self.wallets = self.wallet.__fetch_data__()
+        if wallet == '0':
+            return True
+        wallet_balance = self.wallets.loc[self.wallets['wallet'] == wallet]['balance'].values[0]
+        if wallet_balance >= sum:
+            return True
+        else:
+            return False

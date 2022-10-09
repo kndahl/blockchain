@@ -1,17 +1,20 @@
-import json
-from flask import Flask, jsonify, request
-import blockchain as _blockchain
-import clients as _clients
-from uuid import uuid4
 import sys
+sys.path.append("..")
+
+from flask import Flask, jsonify, request
+from tools.blockchain import Blockchain
+from tools.wallet import Wallet
+from tools.colors import bcolors
+from uuid import uuid4
+import requests
 
 app = Flask(__name__)
 
 # Генерируем уникальный на глобальном уровне адрес для этого узла
 node_identifier = str(uuid4()).replace('-', '')
 
-blockchain = _blockchain.Blockchain()
-generator = _clients.Address()
+blockchain = Blockchain()
+wallet = Wallet()
 
 # endpoint to register the node
 @app.route('/nodes/register/', methods=['POST'])
@@ -77,6 +80,14 @@ def mine_block():
         'proof': block['proof'],
         'previous_hash': block['previous_hash'],
     }
+    # Send block to register transactions
+    resp = requests.post('http://127.0.0.1:9090/register/', 
+        json=block['transactions'])
+    msg = resp.json().get('message')
+    if resp.status_code == 200:
+        print(f'{bcolors.OKCYAN}{msg}{bcolors.ENDC}')
+    else:
+        print(f'{bcolors.FAIL}{msg}{bcolors.ENDC}')
     return jsonify(response), 200
 
 # endpoint to return entire blockchain
@@ -105,8 +116,8 @@ def fetch_nodes():
 @app.route('/send_transactions/', methods=['POST'])
 def send_trans():
     data = request.get_json()
-    # if not blockchain.__is_chain_valid__():
-    #     return jsonify('The blockchain is invalid.'), 400
+    if not blockchain.__is_chain_valid__():
+        return jsonify('The blockchain is invalid.'), 400
     if blockchain.__receive_trans__(trans=data):
         response = {'message': f'All transactions were sent.'}
         return jsonify(response), 200
@@ -122,17 +133,8 @@ def is_valid():
     else:
         return jsonify('The blockchain is valid.'), 200
 
-@app.route('/new_wallet/', methods=['POST'])
-def create_wallet():
-    data = request.get_json()
-    required = ['number']
-    if not all(k in data for k in required):
-        return jsonify('Missing values'), 400
-    addr = generator.create(number=data)
-    return jsonify(addr), 200
-
 if __name__ == '__main__':
-    port = 5000
+    port = 8080
     if len(sys.argv) > 1:
         port = int(sys.argv[1])
     app.run(host='0.0.0.0', port=port)

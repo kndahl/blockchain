@@ -1,4 +1,5 @@
 flask
 uuid
 requests
-urllib
+pandas
+numpy
