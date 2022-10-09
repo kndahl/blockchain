@@ -27,7 +27,7 @@ class TransactChain():
                     if req.status_code == 200:
                         sent_flag = 1
                         self.sent_node = node
-                        print(f'{bcolors.OKGREEN}Transaction was successfully sent to node {node}.{bcolors.ENDC}')
+                        print(f'{bcolors.OKGREEN}Transaction was successfuly sent to node {node}.{bcolors.ENDC}')
                         print(req.json()['message'])
                         break
                 else:
