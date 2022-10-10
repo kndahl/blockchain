@@ -24,56 +24,19 @@ For the security of the system, it is better to have as many nodes available as 
 5. Mining service better to launch on port 3000.
 
 We always have to register our node after the launch:
+Example:
 ```python
-req = requests.post('http://127.0.0.1:8000/nodes/register', json={'nodes': ['http://192.168.100.19:8000']})
-print(req.status_code)
-print(req.json())
-```
-In nodes we send all available nodes.
-```
-200
-{'message': 'New nodes have been added.', 'total_nodes': ['192.168.100.19:8000']}
-```
-Then we have to resolve conflicts:
-```python
-req = requests.get('http://127.0.0.1:8000/nodes/resolve/')
-print(req.status_code)
-print(req.json())
-```
-And we'll get that:
-```
-200
-{'chain': [{'index': 1, 'previous_hash': 0, 'proof': 1, 'timestamp': '2022-10-09 22:49:02.169644', 'transactions': 'Genesis Block'}], 'message': 'Our chain is authoritative.'}
-```
-After successful mining node launching we have to launch transaction node. Look, in json nodes we declare previous and current nodes.
-```python
-req = requests.post('http://127.0.0.1:8001/nodes/register', json={'nodes': ['http://192.168.100.19:8000', 'http://192.168.100.19:8001']})
+import requests
+req = requests.get('http://127.0.0.1:8000/worker/register')
 print(req.status_code)
 print(req.json())
 
-req = requests.get('http://127.0.0.1:8001/nodes/resolve/')
-print(req.status_code)
-print(req.json())
-```
-```
-200
-{'message': 'New nodes have been added.', 'total_nodes': ['192.168.100.19:8001', '192.168.100.19:8000']}
-200
-{'chain': [{'index': 1, 'previous_hash': 0, 'proof': 1, 'timestamp': '2022-10-09 22:49:03.788793', 'transactions': 'Genesis Block'}], 'message': 'Our chain is authoritative.'}
-```
-And after launching all transaction nodes, we must notify all nodes about new one.
-```python
-req = requests.post('http://127.0.0.1:8000/nodes/register', json={'nodes': ['http://192.168.100.19:8000', 'http://192.168.100.19:8001']})
+req = requests.get('http://127.0.0.1:8001/worker/register')
 print(req.status_code)
 print(req.json())
 ```
 
-```
-200
-{'message': 'New nodes have been added.', 'total_nodes': ['192.168.100.19:8000', '192.168.100.19:8001']}
-```
-
-Now all nodes are connected.
+Thus our nodes became connected.
 
 # Endpoints
 ## Create wallet [POST]:
@@ -119,7 +82,5 @@ http://127.0.0.1:8001/chain/
 ```
 
 # TODO
-1. If mining node is anavailable -> transaction node collects transaction & if mining node still anavailable in 10min -> mine block in itself.
-2. Transaction node launchs no matter if mining node is available. It should be launchs if one of mining or transaction node is available.
-3. Auto-node-registration (mining_service knows every available node so...).
-4. Add certificates support.
+1. Fix transactions. Idea: control transactions before block found in Transaction class.
+2. Add certificates support.

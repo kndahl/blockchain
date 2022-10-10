@@ -1,9 +1,11 @@
 import requests
 from tools.colors import bcolors
+from urllib.parse import urlparse
 
 class Mining:
     def __init__(self) -> None:
-        self.all_nodes = ['http://192.168.100.19:8000', 'http://192.168.100.19:8001']
+        #self.all_nodes = ['http://192.168.100.19:8000', 'http://192.168.100.19:8001']
+        self.all_nodes = set()
 
     def start(self):
         print(f'{bcolors.WARNING}Trying to connect with mining node.{bcolors.ENDC}')
@@ -65,3 +67,29 @@ class Mining:
             except Exception as e:
                 print(e)
                 return ['Cannot mine block at any node.', 400, False]
+
+    def __worker_registration__(self, address):
+        try:
+            import requests
+            req = requests.get(f'{address}/chain')
+            if req.status_code == 200:
+                parsed_url = urlparse(address)
+                self.all_nodes.add(parsed_url.netloc)
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
+            return False
+
+    def __notify_all_nodes__(self):
+        list_hosts = list(self.all_nodes)
+        full_named_hosts = [f'http://{host}' for host in list_hosts]
+        for host in full_named_hosts:
+            try:
+                requests.post(f'{host}/nodes/register', json={'nodes': full_named_hosts})
+                for sub_host in full_named_hosts:
+                        requests.get(f'{sub_host}/nodes/resolve/')
+            except Exception:
+                return False
+        return True

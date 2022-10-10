@@ -29,6 +29,17 @@ class Blockchain:
         parsed_url = urlparse(address)
         self.nodes.add(parsed_url.netloc)
 
+    def register_in_worker(self, host):
+        try:
+            host = f'http://{host}'
+            resp = requests.post('http://127.0.0.1:3000/register_node/', json={'node': host})
+            print(f'{bcolors.WARNING}{resp.json()}{bcolors.ENDC}')
+            if resp.status_code == 200:
+                return True
+        except Exception as e:
+            print(e)
+            return False
+
     def transaction(self, sender, recipient, amount) -> int:
         '''
         Get transaction.
@@ -68,7 +79,8 @@ class Blockchain:
             index=index)
         self.chain.append(block)
         self.current_transactions = []
-        self.__fetch_chain__(data=block) # Let all availables nodes know about this block
+        self.resolve_conflicts()
+        #self.__fetch_chain__(data=block) # Let all availables nodes know about this block
         print(f'{bcolors.OKGREEN}Block {index} mined.{bcolors.ENDC}')
         return block
 
@@ -81,6 +93,7 @@ class Blockchain:
         """
  
         neighbours = self.nodes
+        print(f'Known hosts: {neighbours}')
         new_chain = None
  
         # Ищем только цепи, длиннее нашей
@@ -135,24 +148,25 @@ class Blockchain:
             del self.current_transactions[-len(trans)]
             return False
 
-    def __fetch_chain__(self, data):
-        for node in self.nodes:
-            try:
-                print(f'{bcolors.OKCYAN}Trying to fetch node {node}...{bcolors.ENDC}')
-                response = requests.post(f'http://{node}/fetch/', json=data)
-                print(f'{bcolors.OKBLUE}Received response status from node: {response.status_code}{bcolors.ENDC}')
-            except Exception:
-                print(f'{bcolors.FAIL}Failed to fetch node {node}.{bcolors.ENDC}')
+    # def __fetch_chain__(self, data):
+    #     for node in self.nodes:
+    #         print(node)
+    #         try:
+    #             print(f'{bcolors.OKCYAN}Trying to fetch node {node}...{bcolors.ENDC}')
+    #             response = requests.post(f'http://{node}/fetch/', json=data)
+    #             print(f'{bcolors.OKBLUE}Received response status from node: {response.status_code}{bcolors.ENDC}')
+    #         except Exception:
+    #             print(f'{bcolors.FAIL}Failed to fetch node {node}.{bcolors.ENDC}')
 
-    def __update_chain__(self, block):
-        if self.chain[-1] != block:
-            self.chain.append(block)
-        if self.__is_chain_valid__(self.chain):
-            print(f'{bcolors.BOLD}New mined block has been sent to all available nodes.{bcolors.ENDC}')
-            return True
-        else:
-            del self.chain[-1]
-            return False
+    # def __update_chain__(self, block):
+    #     if self.chain[-1] != block:
+    #         self.chain.append(block)
+    #     if self.__is_chain_valid__(self.chain):
+    #         print(f'{bcolors.BOLD}New mined block has been sent to all available nodes.{bcolors.ENDC}')
+    #         return True
+    #     else:
+    #         del self.chain[-1]
+    #         return False
 
     def __hash__(self, block: dict) -> str:
         enc_block = _json.dumps(block, sort_keys=True).encode()

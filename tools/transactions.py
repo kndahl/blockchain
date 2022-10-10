@@ -30,13 +30,25 @@ class TransactChain():
             port = node.split(':')[-1]
             if port[-1] == '1': # transaction node
                 if self.__validate_wallet__(addr=sender) and self.__validate_wallet__(addr=recipient) and self.__validate_balance__(wallet=sender, sum=amount):
-                    req = requests.post(f'http://{node}/transactions/new/', json={'sender': sender, 'recipient': recipient, 'amount': amount})
-                    if req.status_code == 200:
-                        sent_flag = 1
-                        self.sent_node = node
-                        print(f'{bcolors.OKGREEN}Transaction was successfuly sent to node {node}.{bcolors.ENDC}')
-                        print(req.json()['message'])
-                        break
+                    try:
+                        req = requests.post(f'http://{node}/transactions/new/', json={'sender': sender, 'recipient': recipient, 'amount': amount})
+                        if req.status_code == 200:
+                            sent_flag = 1
+                            self.sent_node = node
+                            print(f'{bcolors.OKGREEN}Transaction was successfuly sent to node {node}.{bcolors.ENDC}')
+                            print(req.json()['message'])
+
+                            # Тут нужно хранить и рассчитывать незарегистророванные транзакции
+                            # recip_balance = self.wallet.loc[self.wallet['wallet'] == recipient]['balance']
+                            # sender_balance = self.wallet.loc[self.wallet['wallet'] == sender]['balance']
+                            # self.wallet.loc[self.wallet['wallet'] == sender, 'transaction_balance'] = sender_balance
+                            # self.wallet.loc[self.wallet['wallet'] == sender, 'transaction_balance'] = recip_balance
+                            # self.wallet.loc[self.wallet['wallet'] == recipient, 'transaction_balance'] = recip_balance + amount
+                            # self.wallet.loc[self.wallet['wallet'] == sender, 'transaction_balance'] = sender_balance - amount
+                            # self.wallet.to_csv('../database/wallets.csv', header=True, index=False)
+                            break
+                    except Exception:
+                        pass
                 else:
                     if not self.__validate_wallet__(addr=sender):
                         print(f'{bcolors.FAIL}Sender address validation failed.{bcolors.ENDC}')

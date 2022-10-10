@@ -16,6 +16,16 @@ node_identifier = str(uuid4()).replace('-', '')
 blockchain = Blockchain()
 wallet = Wallet()
 
+# endpoint to register node on worker
+@app.route('/worker/register/')
+def register():
+    if not blockchain.register_in_worker(host=request.host):
+        response = {'message': 'Node registration failed.'}
+        return jsonify(response), 400
+    else:
+        response = {'message': 'Node was successfully registered.'}
+        return jsonify(response), 200
+
 # endpoint to register the node
 @app.route('/nodes/register/', methods=['POST'])
 def register_nodes():
@@ -101,16 +111,16 @@ def get_blockchain():
     }
     return jsonify(response), 200
 
-# endpoint to fetch all available nodes
-@app.route('/fetch/', methods=['POST'])
-def fetch_nodes():
-    data = request.get_json()
-    if blockchain.__update_chain__(block=data):
-        response = {'message': f'All nodes were fetch.'}
-        return jsonify(response), 200
-    else:
-        response = {'message': f'An error occurred during fetching.'}
-        return jsonify(response), 400
+# # endpoint to fetch all available nodes
+# @app.route('/fetch/', methods=['POST'])
+# def fetch_nodes():
+#     data = request.get_json()
+#     if blockchain.__update_chain__(block=data):
+#         response = {'message': f'All nodes were fetched.'}
+#         return jsonify(response), 200
+#     else:
+#         response = {'message': f'An error occurred during fetching.'}
+#         return jsonify(response), 400
 
 # endpoint to send transaction of current node to the mining node
 @app.route('/send_transactions/', methods=['POST'])
