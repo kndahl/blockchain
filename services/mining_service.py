@@ -13,13 +13,19 @@ worker = Mining()
 def mine_block():
     while True:
         res = worker.start()
-        worker.__resolve_conflicts__(curr_node=res[3])
         work = res[2]
         if work:
-            print(f'Status code: {res[1]}. {res[0]}')
+            worker.__resolve_conflicts__(curr_node=res[3])
             if res[1] == 400:
                 time.sleep(20)
-        else:
+        if res[0] == 'No mining node found.':
+            res = worker.__mine_at_trans_node__()
+            work = res[2]
+            if work:
+                worker.__resolve_conflicts__(curr_node=res[3])
+                if res[1] == 400:
+                    time.sleep(20)
+        if not work and res[0] == 'Cannot mine block at any node.':
             return jsonify(res[0]), res[1]
 
 if __name__ == '__main__':

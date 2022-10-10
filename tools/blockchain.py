@@ -30,6 +30,13 @@ class Blockchain:
         self.nodes.add(parsed_url.netloc)
 
     def transaction(self, sender, recipient, amount) -> int:
+        '''
+        Get transaction.
+
+        If array of transactions > 0 -> try to send them to the mining node.
+
+        Returns next block index.
+        '''
         data = {
             'amount': amount,
             'recipient': recipient,
@@ -103,17 +110,20 @@ class Blockchain:
     def __send_trans__(self):
         mining_nodes = ['127.0.0.1:8000']
         for node in mining_nodes:
-            print(f'{bcolors.OKCYAN}Trying to send transactions to mining node ({node})...{bcolors.ENDC}')
-            response = requests.post(f'http://{node}/send_transactions/', json=self.current_transactions)
-            print(f'{bcolors.OKBLUE}Received response status from node: {response.status_code}{bcolors.ENDC}')
-            if response.status_code == 200:
-                print(f'{bcolors.OKCYAN}Transactions were send to mining node {node}.{bcolors.ENDC}')
-                self.current_transactions = []
-                break
+            try:
+                print(f'{bcolors.OKCYAN}Trying to send transactions to mining node ({node})...{bcolors.ENDC}')
+                response = requests.post(f'http://{node}/send_transactions/', json=self.current_transactions)
+                print(f'{bcolors.OKBLUE}Received response status from node: {response.status_code}{bcolors.ENDC}')
+                if response.status_code == 200:
+                    print(f'{bcolors.OKCYAN}Transactions were send to mining node {node}.{bcolors.ENDC}')
+                    self.current_transactions = []
+                    break
+            except Exception:
+                pass
         if len(self.current_transactions) > 0:
             print(f'{bcolors.FAIL}Cannot send transactions to mining node!{bcolors.ENDC}')
             print(f'{bcolors.WARNING}All current transactions will be mined at current node.{bcolors.ENDC}')
-            self.mine_block()
+            #self.mine_block()
 
     def __receive_trans__(self, trans):
         for deal in trans:
@@ -127,9 +137,12 @@ class Blockchain:
 
     def __fetch_chain__(self, data):
         for node in self.nodes:
-            print(f'{bcolors.OKCYAN}Trying to fetch node {node}...{bcolors.ENDC}')
-            response = requests.post(f'http://{node}/fetch/', json=data)
-            print(f'{bcolors.OKBLUE}Received response status from node: {response.status_code}{bcolors.ENDC}')
+            try:
+                print(f'{bcolors.OKCYAN}Trying to fetch node {node}...{bcolors.ENDC}')
+                response = requests.post(f'http://{node}/fetch/', json=data)
+                print(f'{bcolors.OKBLUE}Received response status from node: {response.status_code}{bcolors.ENDC}')
+            except Exception:
+                print(f'{bcolors.FAIL}Failed to fetch node {node}.{bcolors.ENDC}')
 
     def __update_chain__(self, block):
         if self.chain[-1] != block:

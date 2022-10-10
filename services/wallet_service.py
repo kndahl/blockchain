@@ -1,3 +1,4 @@
+import numbers
 import sys
 from urllib import response
 sys.path.append("..")
@@ -16,12 +17,12 @@ def create_wallet():
     required = ['number']
     if not all(k in data for k in required):
         return jsonify('Missing values'), 400
-    addr = wallet.create(number=data)
-    if addr:
-        wallet.__push_wallet_to_database__(wallet=addr)
+    addr = wallet.create(number=data['number'])
+    if addr != None:
+        wallet.__push_wallet_to_database__(wallet=addr, number=data['number'])
         return jsonify(addr), 200
     else:
-        jsonify('An error occurred during wallet creation.'), 400
+        return jsonify('An error occurred during wallet creation.'), 400
 
 # endpoint to register transactions from the mined block
 @app.route('/register/', methods=['POST'])

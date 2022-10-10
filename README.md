@@ -118,3 +118,8 @@ or
 http://127.0.0.1:8001/chain/
 ```
 
+# TODO
+1. If mining node is anavailable -> transaction node collects transaction & if mining node still anavailable in 10min -> mine block in itself.
+2. Transaction node launchs no matter if mining node is available. It should be launchs if one of mining or transaction node is available.
+3. Auto-node-registration (mining_service knows every available node so...).
+4. Add certificates support.
