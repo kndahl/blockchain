@@ -1,25 +1,25 @@
 import requests
 from tools.colors import bcolors
 from urllib.parse import urlparse
+import time
 
 class Mining:
     def __init__(self) -> None:
         self.all_nodes = set()
 
     def start(self):
-        print(f'{bcolors.WARNING}Trying to connect with mining node.{bcolors.ENDC}')
-        self.current_nodes = self.__get_available_nodes__()
-        for node in self.current_nodes:
-            node = node.split('http://')[-1]
-            port = node.split(':')[-1]
-            if port[-1] == '0': # minig node
+        while True:
+            self.current_nodes = self.__get_available_nodes__()
+            for node in self.current_nodes:
+                node = node.split('http://')[-1]
+                print(f'{bcolors.WARNING}Trying to mine block at the node {node}.{bcolors.ENDC}')
                 try:
-                    res = requests.get(f'http://{node}/blockchain/mine_block/')
-                    if (res.status_code == 200) or (res.status_code == 400 and res.json() == 'No transactions for mining.'):
-                        return [res.json(), res.status_code, True, node]
-                except Exception:
-                    return ['No mining node found.', 400, False]
-        return ['No nodes were found.', 400, False]
+                    req = requests.get(f'http://{node}/blockchain/mine_block/')
+                    if req.status_code == 200:
+                        self.__resolve_conflicts__(curr_node=node)
+                    time.sleep(15)
+                except Exception as e:
+                    print(e)
 
     def __get_available_nodes__(self):
         available_nodes = []
@@ -95,7 +95,6 @@ class Mining:
 
     def __notify_transact_service__(self):
         try:
-            #transact_service = 'http://127.0.0.1:7070'
             req = requests.post(f'http://127.0.0.1:7070/transaction/add_node/', json={'nodes': list(self.all_nodes)})
             if req.status_code == 200:
                 return True

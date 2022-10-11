@@ -56,8 +56,6 @@ class Blockchain:
         }
         self.current_transactions.append(data)
         print(f'{bcolors.HEADER}A new transaction has been added to the queue.{bcolors.ENDC}')
-        if len(self.current_transactions) > 0:
-            self.__send_trans__()
         return self.__get_prev_block__()['index'] + 1
 
     def mine_block(self) -> dict:
@@ -79,8 +77,9 @@ class Blockchain:
             index=index)
         self.chain.append(block)
         self.current_transactions = []
-        self.resolve_conflicts()
         print(f'{bcolors.OKGREEN}Block {index} mined.{bcolors.ENDC}')
+        # Notify transaction service
+        self.__notify_trans__()
         return block
 
     def resolve_conflicts(self):
@@ -94,53 +93,31 @@ class Blockchain:
         neighbours = self.nodes
         print(f'Known hosts: {neighbours}')
         new_chain = None
- 
         # Ищем только цепи, длиннее нашей
         max_length = len(self.chain)
- 
         # Захватываем и проверяем все цепи из всех узлов сети
         for node in neighbours:
             response = requests.get(f'http://{node}/blockchain/chain')
- 
             if response.status_code == 200:
                 length = response.json()['length']
                 chain = response.json()['chain']
- 
                 # Проверяем, является ли длина самой длинной, а цепь - валидной
                 if length > max_length and self.__is_chain_valid__(chain):
                     max_length = length
                     new_chain = chain
- 
         # Заменяем нашу цепь, если найдем другую валидную и более длинную
         if new_chain:
             self.chain = new_chain
             print(f'{bcolors.WARNING}Chain has been repalced.{bcolors.ENDC}')
             return True
- 
         return False
 
-    def __send_trans__(self):
-        mining_nodes = ['127.0.0.1:8000']
-        for node in mining_nodes:
-            try:
-                print(f'{bcolors.OKCYAN}Trying to send transactions to mining node ({node})...{bcolors.ENDC}')
-                response = requests.post(f'http://{node}/blockchain/send_transactions/', json=self.current_transactions)
-                print(f'{bcolors.OKBLUE}Received response status from node: {response.status_code}{bcolors.ENDC}')
-                if response.status_code == 200:
-                    print(f'{bcolors.OKCYAN}Transactions were send to mining node {node}.{bcolors.ENDC}')
-                    self.current_transactions = []
-                    break
-            except Exception:
-                pass
-        if len(self.current_transactions) > 0:
-            print(f'{bcolors.FAIL}Cannot send transactions to mining node!{bcolors.ENDC}')
-            print(f'{bcolors.WARNING}All current transactions will be mined at current node.{bcolors.ENDC}')
 
     def __receive_trans__(self, trans):
         for deal in trans:
             self.current_transactions.append(deal)
         if self.__is_chain_valid__(self.chain):
-            print(f'{bcolors.BOLD}Mining node received transaction.{bcolors.ENDC}')
+            print(f'{bcolors.BOLD}Node received transaction.{bcolors.ENDC}')
             return True
         else:
             del self.current_transactions[-len(trans)]
@@ -212,3 +189,10 @@ class Blockchain:
             curr_block = next_block
             block_index += 1
         return True
+
+    def __notify_trans__(self):
+        transact_service = 'http://127.0.0.1:7070'
+        try:
+            requests.get(f'{transact_service}/transaction/block_notice')
+        except Exception as e:
+            print(e)

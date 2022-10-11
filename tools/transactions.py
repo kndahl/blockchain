@@ -15,6 +15,7 @@ class TransactChain():
         self.nodes = set()
         self.available_nodes = self.__get_available_nodes__()
         self.sent_node = ''
+        self.current_transactions = {}
 
     def make_transaction(self, sender, recipient, amount):
         '''
@@ -29,28 +30,20 @@ class TransactChain():
         sent_flag = 0
         while i < len(nodes):
             node = nodes[i]
-            port = node.split(':')[-1]
-            if port[-1] == '1': # transaction node
-                if self.__validate_wallet__(addr=sender) and self.__validate_wallet__(addr=recipient) and self.__validate_balance__(wallet=sender, sum=amount):
-                    try:
-                        req = requests.post(f'http://{node}/blockchain/transactions/new/', json={'sender': sender, 'recipient': recipient, 'amount': amount})
-                        if req.status_code == 200:
-                            sent_flag = 1
-                            self.sent_node = node
-                            print(f'{bcolors.OKGREEN}Transaction was successfuly sent to node {node}.{bcolors.ENDC}')
-                            print(req.json()['message'])
-
-                            # Тут нужно хранить и рассчитывать незарегистророванные транзакции
-                            # recip_balance = self.wallet.loc[self.wallet['wallet'] == recipient]['balance']
-                            # sender_balance = self.wallet.loc[self.wallet['wallet'] == sender]['balance']
-                            # self.wallet.loc[self.wallet['wallet'] == sender, 'transaction_balance'] = sender_balance
-                            # self.wallet.loc[self.wallet['wallet'] == sender, 'transaction_balance'] = recip_balance
-                            # self.wallet.loc[self.wallet['wallet'] == recipient, 'transaction_balance'] = recip_balance + amount
-                            # self.wallet.loc[self.wallet['wallet'] == sender, 'transaction_balance'] = sender_balance - amount
-                            # self.wallet.to_csv('../database/wallets.csv', header=True, index=False)
-                            break
-                    except Exception:
-                        pass
+            if self.__validate_wallet__(addr=sender) and self.__validate_wallet__(addr=recipient) and self.__validate_balance__(wallet=sender, sum=amount):
+                try:
+                    req = requests.post(f'http://{node}/blockchain/transactions/new', json={'sender': sender, 'recipient': recipient, 'amount': amount})
+                    if req.status_code == 200:
+                        sent_flag = 1
+                        self.sent_node = node
+                        # Temporary wallet info
+                        sender_balance = self.wallets.loc[self.wallets['wallet'] == sender]['balance'].values[0]
+                        self.current_transactions.update({sender: sender_balance-amount})
+                        print(f'{bcolors.OKGREEN}Transaction was successfuly sent to node {node}.{bcolors.ENDC}')
+                        print(req.json()['message'])
+                        break
+                except Exception:
+                    pass
                 else:
                     if not self.__validate_wallet__(addr=sender):
                         print(f'{bcolors.FAIL}Sender address validation failed.{bcolors.ENDC}')
@@ -104,9 +97,10 @@ class TransactChain():
         return addr in self.wallets['wallet'].to_list()
 
     def __validate_balance__(self, wallet, sum):
-        ''''
+        '''
         Balance validation function.
         For 0 address if always valid [needs to be validaed in future as well].
+        Also here we validate temporary transactions.
         
         Returns True if wallet balance greater than or equal sum.
         Return False if wallet balance less then sum.
@@ -115,7 +109,12 @@ class TransactChain():
             return True
         wallet_balance = self.wallets.loc[self.wallets['wallet'] == wallet]['balance'].values[0]
         if wallet_balance >= sum:
-            return True
+            if wallet in self.current_transactions:
+                balance = self.current_transactions[wallet]
+                if balance >= sum:
+                    return True
+            else:
+                return True
         else:
             return False
 
@@ -127,3 +126,10 @@ class TransactChain():
         except Exception as e:
             print(e)
             return False
+
+    def __block_found__(self):
+        '''
+        Overwrite transactions history.
+        '''
+        self.current_transactions = {}
+        print(f'{bcolors.OKCYAN}New block was found.{bcolors.ENDC}')

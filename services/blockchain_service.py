@@ -111,19 +111,6 @@ def get_blockchain():
     }
     return jsonify(response), 200
 
-# endpoint to send transaction of current node to the mining node
-@app.route('/blockchain/send_transactions/', methods=['POST'])
-def send_trans():
-    data = request.get_json()
-    if not blockchain.__is_chain_valid__():
-        return jsonify('The blockchain is invalid.'), 400
-    if blockchain.__receive_trans__(trans=data):
-        response = {'message': f'All transactions were sent.'}
-        return jsonify(response), 200
-    else:
-        response = {'message': f'An error occurred during sending transactions.'}
-        return jsonify(response), 400
-
 # endpoint to see if blockchain is valid
 @app.route('/blockchain/validate/', methods=['GET'])
 def is_valid():
@@ -132,8 +119,22 @@ def is_valid():
     else:
         return jsonify('The blockchain is valid.'), 200
 
+def auto_reg():
+    host = request.base_url
+    req = requests.get(f'{host}/blockchain/worker/register')
+    print(req.status_code)
+    print(req.json())
+
+
 if __name__ == '__main__':
     port = 8080
     if len(sys.argv) > 1:
         port = int(sys.argv[1])
     app.run(host='0.0.0.0', port=port)
+    # first_thread = threading.Thread(target=run(port=port))
+    # second_thread = threading.Thread(target=auto_reg)
+    # first_thread.start()
+    # second_thread.start()
+    
+    #threading.Thread(target=app.run(host='0.0.0.0', port=port)).start()
+    #threading.Thread(target=auto_reg).start()

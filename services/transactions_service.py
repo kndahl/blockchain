@@ -43,6 +43,12 @@ def add_node():
         return jsonify('Node registration failed.'), 400
     return jsonify('Node registered.'), 200
 
+# endpoint of new block found notification
+@app.route('/transaction/block_notice/')
+def notify():
+    transact.__block_found__()
+    return jsonify('The transaction node received a notification.'), 200
+
 if __name__ == '__main__':
     port = 7070
     if len(sys.argv) > 1:
