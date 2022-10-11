@@ -1,5 +1,5 @@
 # Architecture
-![Architecture](docs/architecture.png)
+![Architecture](docs/scheme.png)
 
 The service consists of the following nodes:
 1. Blockchain nodes
