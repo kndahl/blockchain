@@ -8,7 +8,7 @@ app = Flask(__name__)
 transact = TransactChain()
 
 # endpoint to create transaction
-@app.route('/new_transaction/', methods=['POST'])
+@app.route('/transaction/new_transaction/', methods=['POST'])
 def create_transaction():
     values = request.get_json()
     required = ['sender', 'recipient', 'amount']
@@ -22,7 +22,7 @@ def create_transaction():
         return jsonify(response), 400
 
 # endpoit to deposit account
-@app.route('/deposit/', methods=['POST'])
+@app.route('/transaction/deposit/', methods=['POST'])
 def deposit():
     values = request.get_json()
     required = ['wallet', 'amount']
@@ -34,6 +34,14 @@ def deposit():
     else:
         response = {'message': f'An error occurred during sending transactions.'}
         return jsonify(response), 400
+
+# endpoint to add node
+@app.route('/transaction/add_node/', methods=['POST'])
+def add_node():
+    values = request.get_json()
+    if not transact.__add_node__(address=values['nodes']):
+        return jsonify('Node registration failed.'), 400
+    return jsonify('Node registered.'), 200
 
 if __name__ == '__main__':
     port = 7070

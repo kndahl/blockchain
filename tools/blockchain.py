@@ -32,7 +32,7 @@ class Blockchain:
     def register_in_worker(self, host):
         try:
             host = f'http://{host}'
-            resp = requests.post('http://127.0.0.1:3000/register_node/', json={'node': host})
+            resp = requests.post('http://127.0.0.1:3000/worker/register_node/', json={'node': host})
             print(f'{bcolors.WARNING}{resp.json()}{bcolors.ENDC}')
             if resp.status_code == 200:
                 return True
@@ -80,7 +80,6 @@ class Blockchain:
         self.chain.append(block)
         self.current_transactions = []
         self.resolve_conflicts()
-        #self.__fetch_chain__(data=block) # Let all availables nodes know about this block
         print(f'{bcolors.OKGREEN}Block {index} mined.{bcolors.ENDC}')
         return block
 
@@ -101,7 +100,7 @@ class Blockchain:
  
         # Захватываем и проверяем все цепи из всех узлов сети
         for node in neighbours:
-            response = requests.get(f'http://{node}/chain')
+            response = requests.get(f'http://{node}/blockchain/chain')
  
             if response.status_code == 200:
                 length = response.json()['length']
@@ -125,7 +124,7 @@ class Blockchain:
         for node in mining_nodes:
             try:
                 print(f'{bcolors.OKCYAN}Trying to send transactions to mining node ({node})...{bcolors.ENDC}')
-                response = requests.post(f'http://{node}/send_transactions/', json=self.current_transactions)
+                response = requests.post(f'http://{node}/blockchain/send_transactions/', json=self.current_transactions)
                 print(f'{bcolors.OKBLUE}Received response status from node: {response.status_code}{bcolors.ENDC}')
                 if response.status_code == 200:
                     print(f'{bcolors.OKCYAN}Transactions were send to mining node {node}.{bcolors.ENDC}')
@@ -136,7 +135,6 @@ class Blockchain:
         if len(self.current_transactions) > 0:
             print(f'{bcolors.FAIL}Cannot send transactions to mining node!{bcolors.ENDC}')
             print(f'{bcolors.WARNING}All current transactions will be mined at current node.{bcolors.ENDC}')
-            #self.mine_block()
 
     def __receive_trans__(self, trans):
         for deal in trans:
@@ -147,26 +145,6 @@ class Blockchain:
         else:
             del self.current_transactions[-len(trans)]
             return False
-
-    # def __fetch_chain__(self, data):
-    #     for node in self.nodes:
-    #         print(node)
-    #         try:
-    #             print(f'{bcolors.OKCYAN}Trying to fetch node {node}...{bcolors.ENDC}')
-    #             response = requests.post(f'http://{node}/fetch/', json=data)
-    #             print(f'{bcolors.OKBLUE}Received response status from node: {response.status_code}{bcolors.ENDC}')
-    #         except Exception:
-    #             print(f'{bcolors.FAIL}Failed to fetch node {node}.{bcolors.ENDC}')
-
-    # def __update_chain__(self, block):
-    #     if self.chain[-1] != block:
-    #         self.chain.append(block)
-    #     if self.__is_chain_valid__(self.chain):
-    #         print(f'{bcolors.BOLD}New mined block has been sent to all available nodes.{bcolors.ENDC}')
-    #         return True
-    #     else:
-    #         del self.chain[-1]
-    #         return False
 
     def __hash__(self, block: dict) -> str:
         enc_block = _json.dumps(block, sort_keys=True).encode()

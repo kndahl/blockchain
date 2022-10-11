@@ -17,7 +17,7 @@ blockchain = Blockchain()
 wallet = Wallet()
 
 # endpoint to register node on worker
-@app.route('/worker/register/')
+@app.route('/blockchain/worker/register/')
 def register():
     if not blockchain.register_in_worker(host=request.host):
         response = {'message': 'Node registration failed.'}
@@ -27,7 +27,7 @@ def register():
         return jsonify(response), 200
 
 # endpoint to register the node
-@app.route('/nodes/register/', methods=['POST'])
+@app.route('/blockchain/nodes/register/', methods=['POST'])
 def register_nodes():
     values = request.get_json()
  
@@ -45,7 +45,7 @@ def register_nodes():
     return jsonify(response), 200
 
 # Consensus
-@app.route('/nodes/resolve/', methods=['GET'])
+@app.route('/blockchain/nodes/resolve/', methods=['GET'])
 def consensus():
     replaced = blockchain.resolve_conflicts()
  
@@ -63,7 +63,7 @@ def consensus():
     return jsonify(response), 200
 
 # endpoint to create transaction
-@app.route('/transactions/new/', methods=['POST'])
+@app.route('/blockchain/transactions/new/', methods=['POST'])
 def create_transaction():
     values = request.get_json()
     required = ['sender', 'recipient', 'amount']
@@ -74,7 +74,7 @@ def create_transaction():
     return jsonify(response), 200
 
 # endpoint to mine a block
-@app.route('/mine_block/', methods=['GET'])
+@app.route('/blockchain/mine_block/', methods=['GET'])
 def mine_block():
     if not blockchain.__is_chain_valid__():
         return jsonify('The blockchain is invalid.'), 400
@@ -91,7 +91,7 @@ def mine_block():
         'previous_hash': block['previous_hash'],
     }
     # Send block to register transactions
-    resp = requests.post('http://127.0.0.1:9090/register/', 
+    resp = requests.post('http://127.0.0.1:9090/wallet/register/', 
         json=block['transactions'])
     msg = resp.json().get('message')
     if resp.status_code == 200:
@@ -101,7 +101,7 @@ def mine_block():
     return jsonify(response), 200
 
 # endpoint to return entire blockchain
-@app.route('/chain/', methods=['GET'])
+@app.route('/blockchain/chain/', methods=['GET'])
 def get_blockchain():
     if not blockchain.__is_chain_valid__():
         return jsonify('The blockchain is invalid.'), 400
@@ -111,19 +111,8 @@ def get_blockchain():
     }
     return jsonify(response), 200
 
-# # endpoint to fetch all available nodes
-# @app.route('/fetch/', methods=['POST'])
-# def fetch_nodes():
-#     data = request.get_json()
-#     if blockchain.__update_chain__(block=data):
-#         response = {'message': f'All nodes were fetched.'}
-#         return jsonify(response), 200
-#     else:
-#         response = {'message': f'An error occurred during fetching.'}
-#         return jsonify(response), 400
-
 # endpoint to send transaction of current node to the mining node
-@app.route('/send_transactions/', methods=['POST'])
+@app.route('/blockchain/send_transactions/', methods=['POST'])
 def send_trans():
     data = request.get_json()
     if not blockchain.__is_chain_valid__():
@@ -136,7 +125,7 @@ def send_trans():
         return jsonify(response), 400
 
 # endpoint to see if blockchain is valid
-@app.route('/validate/', methods=['GET'])
+@app.route('/blockchain/validate/', methods=['GET'])
 def is_valid():
     if not blockchain.__is_chain_valid__():
         return jsonify('The blockchain is invalid.'), 400

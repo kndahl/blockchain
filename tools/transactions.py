@@ -1,7 +1,9 @@
+import time
 import requests
 from tools.blockchain import Blockchain
 from tools.wallet import Wallet
 from tools.colors import bcolors
+from urllib.parse import urlparse
 import pandas as pd
 import numpy as np
 import os
@@ -10,8 +12,8 @@ class TransactChain():
     def __init__(self) -> None:
         self.blockchain = Blockchain()
         self.wallet = Wallet()
-        self.nodes = ['http://192.168.100.19:8000', 'http://192.168.100.19:8001']
-        self.availables_nodes = self.__get_availables_nodes__()
+        self.nodes = set()
+        self.available_nodes = self.__get_available_nodes__()
         self.sent_node = ''
 
     def make_transaction(self, sender, recipient, amount):
@@ -21,7 +23,7 @@ class TransactChain():
         Returns True if transaction is valid and was successfully sent to mining node.
         Return False if transaction is not valid or sending to mining node was failed.
         '''
-        nodes = self.availables_nodes
+        nodes = self.available_nodes
         self.wallets = self.wallet.__fetch_data__()
         i = 0
         sent_flag = 0
@@ -31,7 +33,7 @@ class TransactChain():
             if port[-1] == '1': # transaction node
                 if self.__validate_wallet__(addr=sender) and self.__validate_wallet__(addr=recipient) and self.__validate_balance__(wallet=sender, sum=amount):
                     try:
-                        req = requests.post(f'http://{node}/transactions/new/', json={'sender': sender, 'recipient': recipient, 'amount': amount})
+                        req = requests.post(f'http://{node}/blockchain/transactions/new/', json={'sender': sender, 'recipient': recipient, 'amount': amount})
                         if req.status_code == 200:
                             sent_flag = 1
                             self.sent_node = node
@@ -76,7 +78,7 @@ class TransactChain():
             print(f'{bcolors.FAIL}Recipient address validation failed.{bcolors.ENDC}')
         return False
 
-    def __get_availables_nodes__(self):
+    def __get_available_nodes__(self):
         '''
         Return all available nodes.
         '''
@@ -84,9 +86,9 @@ class TransactChain():
         for node in self.nodes:
             node = node.split('http://')[-1]
             try:
-                response = requests.get(f'http://{node}/chain')
+                response = requests.get(f'http://{node}/blockchain/chain')
                 if response.status_code == 200:
-                    response = requests.get(f'http://{node}/validate/')
+                    response = requests.get(f'http://{node}/blockchain/validate/')
                     if response.status_code == 200:
                         available_nodes.append(node)
                         print(f'{bcolors.OKGREEN}Successfully connected with node {node}.{bcolors.ENDC}')
@@ -115,4 +117,13 @@ class TransactChain():
         if wallet_balance >= sum:
             return True
         else:
+            return False
+
+    def __add_node__(self, address):
+        try:
+            self.nodes.update(address)
+            self.available_nodes = self.__get_available_nodes__()
+            return True
+        except Exception as e:
+            print(e)
             return False

@@ -11,7 +11,7 @@ app = Flask(__name__)
 wallet = Wallet()
 
 # endpoint to create wallet
-@app.route('/new_wallet/', methods=['POST'])
+@app.route('/wallet/new_wallet/', methods=['POST'])
 def create_wallet():
     data = request.get_json()
     required = ['number']
@@ -25,7 +25,7 @@ def create_wallet():
         return jsonify('An error occurred during wallet creation.'), 400
 
 # endpoint to register transactions from the mined block
-@app.route('/register/', methods=['POST'])
+@app.route('/wallet/register/', methods=['POST'])
 def reg_transactions():
     data = request.get_json()
     if wallet.register_transaction(block=data):

@@ -3,7 +3,7 @@ import sys
 sys.path.append("..")
 
 from flask import Flask, jsonify, request
-from tools.mining import Mining
+from tools.worker import Mining
 import time
 
 # TODO:
@@ -13,7 +13,7 @@ app = Flask(__name__)
 worker = Mining()
 
 # endpoint to mine a block
-@app.route('/mine/', methods=['GET'])
+@app.route('/worker/mine/', methods=['GET'])
 def mine_block():
     while True:
         res = worker.start()
@@ -29,7 +29,7 @@ def mine_block():
             return jsonify(res[0]), res[1]
         time.sleep(20)
         
-@app.route('/register_node/', methods=['POST'])
+@app.route('/worker/register_node/', methods=['POST'])
 def register():
     # node_ip = request.environ['REMOTE_ADDR']
     # node_port = request.environ['REMOTE_PORT']
@@ -39,10 +39,17 @@ def register():
     if not all(k in values for k in required):
         return jsonify('Missing values'), 400
     if not worker.__worker_registration__(address=values['node']):
-        return jsonify('Node regiteration failed.'), 200
+        return jsonify('Node regiteration failed.'), 400
     if not worker.__notify_all_nodes__():
         return jsonify('Blockchain registration failed.'), 400
+    if not worker.__notify_transact_service__():
+        return jsonify('Node registration in transact service failed.'), 400
     return jsonify('Node registered.'), 200
+
+# endpoint to get all registered nodes
+@app.route('/worker/get_nodes/', methods=['GET'])
+def get_nodes():
+    return jsonify(worker.__get_available_nodes__()), 200
 
 if __name__ == '__main__':
     port = 3000

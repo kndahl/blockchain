@@ -41,7 +41,7 @@ Thus our nodes became connected.
 # Endpoints
 ## Create wallet [POST]:
 ```
-http://127.0.0.1:9090/new_wallet/
+http://127.0.0.1:9090/wallet/new_wallet/
 ```
 JSON must contains phone number.
 ```python
@@ -49,7 +49,7 @@ json={'number': '89057731311'}
 ```
 ## Deposit [POST]:
 ```
-http://127.0.0.1:7070/deposit/
+http://127.0.0.1:7070/transaction/deposit/
 ```
 JSON must contains wallet and amount.
 ```python
@@ -61,7 +61,7 @@ json =
 ```
 ## Transaction [POST]
 ```
-http://127.0.0.1:7070/new_transaction/
+http://127.0.0.1:7070/transaction/new_transaction/
 ```
 JSON must contains sender, recipient and amount.
 ```python
@@ -74,11 +74,11 @@ json =
 ```
 ## Chain [GET]
 ```
-http://127.0.0.1:8000/chain/ 
+http://127.0.0.1:8000/blockchain/chain/ 
 
 or
 
-http://127.0.0.1:8001/chain/
+http://127.0.0.1:8001/blockchain/chain/
 ```
 
 # TODO
