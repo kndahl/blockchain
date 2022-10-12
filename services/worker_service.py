@@ -6,9 +6,6 @@ from flask import Flask, jsonify, request
 from tools.worker import Mining
 import time
 
-# TODO:
-# 1. Make as worker service
-
 app = Flask(__name__)
 worker = Mining()
 

@@ -3,7 +3,6 @@ sys.path.append("..")
 
 from flask import Flask, jsonify, request
 from tools.blockchain import Blockchain
-from tools.wallet import Wallet
 from tools.colors import bcolors
 from uuid import uuid4
 import requests
@@ -14,7 +13,6 @@ app = Flask(__name__)
 node_identifier = str(uuid4()).replace('-', '')
 
 blockchain = Blockchain()
-wallet = Wallet()
 
 # endpoint to register node on worker
 @app.route('/blockchain/worker/register/')

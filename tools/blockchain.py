@@ -13,7 +13,6 @@ class Blockchain:
     def __init__(self) -> None:
         self.nodes = set()
         self.chain = list()
-        self.wallet = Wallet()
         self.current_transactions = []
         genesis_block = self.__create_block__(data='Genesis Block', proof=1, prev_hash=0, index=1)
         self.chain.append(genesis_block)

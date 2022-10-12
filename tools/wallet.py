@@ -2,11 +2,9 @@ import hashlib as _hashlib
 import random
 import datetime
 from tools.colors import bcolors
+from sqlalchemy import create_engine
 import pandas as pd
 import os
-
-if not os.path.exists('../database'):
-    os.makedirs('../database')
 
 class Wallet():
 
@@ -69,7 +67,7 @@ class Wallet():
         '''
         data = {'wallet': [wallet], 'balance': [0], 'number': [number]}
         df = pd.DataFrame(data=data)
-        df.to_csv('../database/wallets.csv', mode='a', header=False, index=False)
+        df.to_sql('wallets', self.engine, if_exists='append', index=False)
 
     def __update_info__(self, sender, recipient, amount):
         '''
@@ -86,21 +84,54 @@ class Wallet():
         '''
         Fetching data from DataBase.
         '''
-        try:
-            wallets = pd.read_csv('../database/wallets.csv')
-        except FileNotFoundError:
-            data = {'wallet': [0], 'balance': [0], 'number': ['None']}
+        import sqlalchemy
+        from sqlalchemy_utils import database_exists
+        from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Float, Date
+
+        self.engine = create_engine('postgresql://eolika:eolika@localhost:5432/blockchain')
+        if not database_exists(self.engine.url):
+            print('DataBase doesnt exists. Create...')
+            with sqlalchemy.create_engine(
+                'postgresql:///postgres',
+                isolation_level='AUTOCOMMIT'
+            ).connect() as connection:
+                connection.execute('CREATE DATABASE blockchain')
+            print('DataBase created!')
+            
+        print('Successfully connected to DB.')
+
+        inspect = sqlalchemy.inspect(self.engine)
+        if not inspect.has_table('wallets'):  # If table don't exist, Create.
+            print('Table wallets doesnt exsits. Create...')
+            metadata = MetaData(self.engine)
+            # Create a table with the appropriate Columns
+            Table('wallets', metadata,
+                Column('number', String, primary_key=True, nullable=False), 
+                Column('wallet', String), 
+                Column('balance', Float))
+            # Implement the creation
+            metadata.create_all()
+
+            # Add default wallet
+            data = {'wallet': ['0'], 'balance': [0], 'number': ['0']}
             df = pd.DataFrame(data=data)
-            df.to_csv('../database/wallets.csv', header=True, index=False)
-            wallets = pd.read_csv('../database/wallets.csv')
-        print(f'{bcolors.UNDERLINE}DataBase was fetched.{bcolors.ENDC}')
+            df.to_sql('wallets', self.engine, if_exists='replace', index=False)
+
+        print('Successfully inspected the table!')
+
+        connection = self.engine.connect()
+        metadata = sqlalchemy.MetaData()
+        table = sqlalchemy.Table('wallets', metadata, autoload=True, autoload_with=self.engine)
+        query = sqlalchemy.select([table])
+        wallets = pd.read_sql_query(query, connection)
+        print(wallets)
         return wallets
 
     def __push_changes__(self):
         '''
         Pushing changes in DataBase.
         '''
-        self.wallet.to_csv('../database/wallets.csv', header=True, index=False)
+        self.wallet.to_sql('wallets', self.engine, if_exists='replace', index=False)
 
     def __number_already_registered__(self, wallets, number):
         '''

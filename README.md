@@ -17,12 +17,36 @@ New mined block information registering in DB and sends in Wallet.
 To avoid double or more spending Transaction Service saves all current deals. Every transaction is validated.
 When new block mined Transaction Service overwrite current deals.
 
+DataBased based on Postgres.
+If you run blockchain localy you have to first run DB service.
+If DB wasn't created before, Wallet Servise's method __fetch_data__ will create DB with table wallets.
+
 # Usage
 
 1. Blockchain nodes must be on ports 8***.
 3. Transaction service must be on port 7070.
 4. Wallet service must be on port 9090.
 5. Mining service better to launch on port 3000.
+6. Postgres based DataBase.
+
+## If you run it localy
+[Database]
+
+First of all you have to run postgres service.
+Since I developed the service on Mac OS, my Makefile is adapted for OSX operating system.
+
+DBeaver is very helpful tool to work with DB.
+
+[Services]
+Start each service on its own port.
+Make sure following services are running:
+1. Postgres
+2. Blockchain node (at least 1 node)
+3. Transaction service
+4. Worker service
+5. Wallet service
+
+[Blockchain node registration]
 
 We always have to register our blockchain node after the launch:
 Example:
@@ -38,6 +62,7 @@ print(req.json())
 ```
 
 Thus our nodes became connected.
+
 
 # Endpoints
 ## Create wallet [POST]:
@@ -85,3 +110,4 @@ http://127.0.0.1:8001/blockchain/chain/
 # TODO
 1. Fully node auto-registration.
 2. Add certificates support.
+3. Auto-backups.

@@ -3,3 +3,5 @@ uuid
 requests
 pandas
 numpy
+sqlalchemy
+psycopg2
