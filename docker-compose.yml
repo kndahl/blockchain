@@ -1,0 +1,98 @@
+version: '3.9'
+
+services:
+
+# Blockchain node1
+  blockchain_node1:
+    container_name: blockchain_node1
+    environment: # To send data in container for node registration
+        - NODE_NAME=blockchain_node1
+        - NODE_PORT=8000
+        - PYTHONUNBUFFERED=1 # If you want to see your prints inside the flask container
+    build:
+      context: services/blockchain # Path to dockerfile
+      dockerfile: Dockerfile # Name of Dockerfile
+    command: python3 service.py 8000 # Launch command
+    ports:
+      - 8000:8000
+    restart: on-failure
+# Blockchain node2
+  blockchain_node2:
+    container_name: blockchain_node2
+    environment:
+      - NODE_NAME=blockchain_node2
+      - NODE_PORT=8001
+      - PYTHONUNBUFFERED=1
+    build:
+      context: services/blockchain
+      dockerfile: Dockerfile
+    command: python3 service.py 8001
+    ports:
+      - 8001:8001
+    restart: on-failure
+# Blockchain node3
+  blockchain_node3:
+    container_name: blockchain_node3
+    environment:
+      - NODE_NAME=blockchain_node3
+      - NODE_PORT=8002
+      - PYTHONUNBUFFERED=1
+    build:
+      context: services/blockchain
+      dockerfile: Dockerfile
+    command: python3 service.py 8002
+    ports:
+      - 8002:8002
+    restart: on-failure
+# Transaction service
+  transaction:
+    container_name: transaction_service
+    environment:
+      - PYTHONUNBUFFERED=1
+    build: 
+      context: services/transaction
+      dockerfile: Dockerfile
+    command: python3 service.py
+    ports:
+      - 7070:7070
+    restart: on-failure
+# Wallet service
+  wallet:
+    container_name: wallet_service
+    environment:
+      - PYTHONUNBUFFERED=1
+    build: 
+      context: services/wallet
+      dockerfile: Dockerfile
+    command: python3 service.py
+    ports:
+      - 9090:9090
+    restart: on-failure
+# Worker service
+  worker:
+    container_name: worker_service
+    environment:
+      - PYTHONUNBUFFERED=1
+    build: 
+      context: services/worker
+      dockerfile: Dockerfile
+    command: python3 service.py
+    ports:
+      - 3000:3000
+    restart: on-failure
+# Postgres
+  postgres:
+    container_name: postgres_container
+    image: postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      PGDATA: /data/postgres
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+volumes:
+  postgres:

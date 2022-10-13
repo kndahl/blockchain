@@ -29,6 +29,27 @@ If DB wasn't created before, Wallet Servise's method __fetch_data__ will create 
 5. Mining service better to launch on port 3000.
 6. Postgres based DataBase.
 
+## Docker
+To run all containers in Docker run this command:
+```bash
+make dockerup
+```
+To down the Docker's containers run:
+```bash
+make dockerdown
+```
+
+The Docker will run all necesary containers itself:
+1. 3 blockchain nodes
+2. 1 transaction service
+3. 1 worker service
+4. 1 wallet service
+5. 1 postgres server
+
+Once docker has started all the containers, all you have to do is run a file called mining_start.py
+
+Thus, you will start mining blocks and will be able to make transactions.
+
 ## If you run it localy
 [Database]
 
@@ -46,23 +67,7 @@ Make sure following services are running:
 4. Worker service
 5. Wallet service
 
-[Blockchain node registration]
-
-We always have to register our blockchain node after the launch:
-Example:
-```python
-import requests
-req = requests.get('http://127.0.0.1:8000/worker/register')
-print(req.status_code)
-print(req.json())
-
-req = requests.get('http://127.0.0.1:8001/worker/register')
-print(req.status_code)
-print(req.json())
-```
-
-Thus our nodes became connected.
-
+Just run each service in different terminals.
 
 # Endpoints
 ## Create wallet [POST]:
@@ -108,6 +113,5 @@ http://127.0.0.1:8001/blockchain/chain/
 ```
 
 # TODO
-1. Fully node auto-registration.
-2. Add certificates support.
-3. Auto-backups.
+1. Add certificates support.
+2. Auto-backups.

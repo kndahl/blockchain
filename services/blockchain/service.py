@@ -2,10 +2,12 @@ import sys
 sys.path.append("..")
 
 from flask import Flask, jsonify, request
-from tools.blockchain import Blockchain
-from tools.colors import bcolors
+from blockchain import Blockchain
+from colors import bcolors
 from uuid import uuid4
 import requests
+import threading
+import time
 
 app = Flask(__name__)
 
@@ -17,6 +19,7 @@ blockchain = Blockchain()
 # endpoint to register node on worker
 @app.route('/blockchain/worker/register/')
 def register():
+    print(request.host)
     if not blockchain.register_in_worker(host=request.host):
         response = {'message': 'Node registration failed.'}
         return jsonify(response), 400
@@ -89,7 +92,8 @@ def mine_block():
         'previous_hash': block['previous_hash'],
     }
     # Send block to register transactions
-    resp = requests.post('http://127.0.0.1:9090/wallet/register/', 
+   #resp = requests.post('http://127.0.0.1:9090/wallet/register/', 
+    resp = requests.post('http://wallet_service:9090/wallet/register/', 
         json=block['transactions'])
     msg = resp.json().get('message')
     if resp.status_code == 200:
@@ -117,22 +121,50 @@ def is_valid():
     else:
         return jsonify('The blockchain is valid.'), 200
 
-def auto_reg():
-    host = request.base_url
-    req = requests.get(f'{host}/blockchain/worker/register')
-    print(req.status_code)
-    print(req.json())
+@app.before_first_request
+def activate_job():
+    from registration import reg_node
+    def run_job():
+        while True:
+            print("Run recurring task")
+            if not reg_node():
+                pass
+            else:
+                break
+            time.sleep(3)
 
+    thread = threading.Thread(target=run_job)
+    thread.start()
+
+@app.route("/")
+def hello():
+    return "Hello World!"
+
+def start_runner():
+    def start_loop():
+        import os
+        host = os.environ['NODE_NAME']
+        port = os.environ['NODE_PORT']
+        not_started = True
+        while not_started:
+            print('In start loop')
+            try:
+                r = requests.get(f'http://{host}:{port}/')
+                if r.status_code == 200:
+                    print('Server started, quiting start_loop')
+                    not_started = False
+                print(r.status_code)
+            except:
+                print('Server not yet started')
+            time.sleep(2)
+
+    print('Started runner')
+    thread = threading.Thread(target=start_loop)
+    thread.start()
 
 if __name__ == '__main__':
     port = 8080
     if len(sys.argv) > 1:
         port = int(sys.argv[1])
+    start_runner()
     app.run(host='0.0.0.0', port=port)
-    # first_thread = threading.Thread(target=run(port=port))
-    # second_thread = threading.Thread(target=auto_reg)
-    # first_thread.start()
-    # second_thread.start()
-    
-    #threading.Thread(target=app.run(host='0.0.0.0', port=port)).start()
-    #threading.Thread(target=auto_reg).start()

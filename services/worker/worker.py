@@ -1,5 +1,5 @@
 import requests
-from tools.colors import bcolors
+from colors import bcolors
 from urllib.parse import urlparse
 import time
 
@@ -95,7 +95,8 @@ class Mining:
 
     def __notify_transact_service__(self):
         try:
-            req = requests.post(f'http://127.0.0.1:7070/transaction/add_node/', json={'nodes': list(self.all_nodes)})
+            #req = requests.post(f'http://127.0.0.1:7070/transaction/add_node/', json={'nodes': list(self.all_nodes)})
+            req = requests.post(f'http://transaction_service:7070/transaction/add_node/', json={'nodes': list(self.all_nodes)})
             if req.status_code == 200:
                 return True
         except Exception as e:

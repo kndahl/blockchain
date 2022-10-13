@@ -3,8 +3,7 @@ import hashlib as _hashlib
 import json as _json
 from urllib.parse import urlparse
 import requests
-from tools.colors import bcolors
-from tools.wallet import Wallet
+from colors import bcolors
 import time
 import datetime
 
@@ -31,7 +30,8 @@ class Blockchain:
     def register_in_worker(self, host):
         try:
             host = f'http://{host}'
-            resp = requests.post('http://127.0.0.1:3000/worker/register_node/', json={'node': host})
+            #resp = requests.post('http://127.0.0.1:3000/worker/register_node/', json={'node': host}) #--for local
+            resp = requests.post('http://worker_service:3000/worker/register_node/', json={'node': host})
             print(f'{bcolors.WARNING}{resp.json()}{bcolors.ENDC}')
             if resp.status_code == 200:
                 return True
@@ -190,7 +190,8 @@ class Blockchain:
         return True
 
     def __notify_trans__(self):
-        transact_service = 'http://127.0.0.1:7070'
+        #transact_service = 'http://127.0.0.1:7070'
+        transact_service = 'http://transaction_service:7070'
         try:
             requests.get(f'{transact_service}/transaction/block_notice')
         except Exception as e:

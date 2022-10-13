@@ -3,8 +3,7 @@ import sys
 sys.path.append("..")
 
 from flask import Flask, jsonify, request
-from tools.worker import Mining
-import time
+from worker import Mining
 
 app = Flask(__name__)
 worker = Mining()

@@ -1,10 +1,8 @@
-import numbers
 import sys
-from urllib import response
 sys.path.append("..")
 
 from flask import Flask, jsonify, request
-from tools.wallet import Wallet
+from wallet import Wallet
 
 app = Flask(__name__)
 

@@ -2,7 +2,7 @@ import sys
 sys.path.append("..")
 
 from flask import Flask, jsonify, request
-from tools.transactions import TransactChain
+from transactions import TransactChain
 
 app = Flask(__name__)
 transact = TransactChain()

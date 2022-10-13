@@ -1,10 +1,11 @@
 import hashlib as _hashlib
 import random
 import datetime
-from tools.colors import bcolors
-from sqlalchemy import create_engine
+from colors import bcolors
+import sqlalchemy
+from sqlalchemy_utils import database_exists
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Float, Date
 import pandas as pd
-import os
 
 class Wallet():
 
@@ -84,15 +85,13 @@ class Wallet():
         '''
         Fetching data from DataBase.
         '''
-        import sqlalchemy
-        from sqlalchemy_utils import database_exists
-        from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Float, Date
-
-        self.engine = create_engine('postgresql://eolika:eolika@localhost:5432/blockchain')
+        #self.engine = create_engine('postgresql://eolika:eolika@localhost:5432/blockchain') #--for local
+        self.engine = create_engine('postgresql://admin:admin@postgres_container:5432/blockchain') #--for docker
         if not database_exists(self.engine.url):
             print('DataBase doesnt exists. Create...')
             with sqlalchemy.create_engine(
-                'postgresql:///postgres',
+                #'postgresql:///postgres', #--for local
+                'postgresql://admin:admin@postgres_container:5432', #--for docker
                 isolation_level='AUTOCOMMIT'
             ).connect() as connection:
                 connection.execute('CREATE DATABASE blockchain')

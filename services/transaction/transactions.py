@@ -1,17 +1,9 @@
-import time
 import requests
-from tools.blockchain import Blockchain
-from tools.wallet import Wallet
-from tools.colors import bcolors
-from urllib.parse import urlparse
+from colors import bcolors
 import pandas as pd
-import numpy as np
-import os
 
 class TransactChain():
     def __init__(self) -> None:
-        self.blockchain = Blockchain()
-        self.wallet = Wallet()
         self.nodes = set()
         self.available_nodes = self.__get_available_nodes__()
         self.sent_node = ''
@@ -25,7 +17,7 @@ class TransactChain():
         Return False if transaction is not valid or sending to mining node was failed.
         '''
         nodes = self.available_nodes
-        self.wallets = self.wallet.__fetch_data__()
+        self.wallets = self.__fetch_data__()
         i = 0
         sent_flag = 0
         while i < len(nodes):
@@ -63,7 +55,7 @@ class TransactChain():
         Returns True if make_transaction function was success.
         Returns False if __validate_wallet__ or  make_transaction funcrions were failed.
         '''
-        self.wallets = self.wallet.__fetch_data__()
+        self.wallets = self.__fetch_data__()
         if self.__validate_wallet__(addr=addr):
             if self.make_transaction(sender='0', recipient=addr, amount=sum):
                 return True
@@ -133,3 +125,51 @@ class TransactChain():
         '''
         self.current_transactions = {}
         print(f'{bcolors.OKCYAN}New block was found.{bcolors.ENDC}')
+
+    def __fetch_data__(self):
+        '''
+        Fetching data from DataBase.
+        '''
+        import sqlalchemy
+        from sqlalchemy_utils import database_exists
+        from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Float, Date
+
+        #self.engine = create_engine('postgresql://eolika:eolika@localhost:5432/blockchain') #--for local
+        self.engine = create_engine('postgresql://admin:admin@postgres_container:5432/blockchain') #--for docker
+        if not database_exists(self.engine.url):
+            print('DataBase doesnt exists. Create...')
+            with sqlalchemy.create_engine(
+                'postgresql:///postgres',
+                isolation_level='AUTOCOMMIT'
+            ).connect() as connection:
+                connection.execute('CREATE DATABASE blockchain')
+            print('DataBase created!')
+            
+        print('Successfully connected to DB.')
+
+        inspect = sqlalchemy.inspect(self.engine)
+        if not inspect.has_table('wallets'):  # If table don't exist, Create.
+            print('Table wallets doesnt exsits. Create...')
+            metadata = MetaData(self.engine)
+            # Create a table with the appropriate Columns
+            Table('wallets', metadata,
+                Column('number', String, primary_key=True, nullable=False), 
+                Column('wallet', String), 
+                Column('balance', Float))
+            # Implement the creation
+            metadata.create_all()
+
+            # Add default wallet
+            data = {'wallet': ['0'], 'balance': [0], 'number': ['0']}
+            df = pd.DataFrame(data=data)
+            df.to_sql('wallets', self.engine, if_exists='replace', index=False)
+
+        print('Successfully inspected the table!')
+
+        connection = self.engine.connect()
+        metadata = sqlalchemy.MetaData()
+        table = sqlalchemy.Table('wallets', metadata, autoload=True, autoload_with=self.engine)
+        query = sqlalchemy.select([table])
+        wallets = pd.read_sql_query(query, connection)
+        print(wallets)
+        return wallets
