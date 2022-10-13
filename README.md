@@ -1,11 +1,12 @@
 # Architecture
 ![Architecture](docs/scheme.png)
 
-The service consists of the following nodes:
+The service consists of the following services:
 1. Blockchain nodes
 2. Transaction node
 3. Worker node
 4. Wallet node
+5. Postgres DataBase
 
 For the security of the system, it is better to have as many blockchain nodes available as possible.
 
@@ -115,3 +116,4 @@ http://127.0.0.1:8001/blockchain/chain/
 # TODO
 1. Add certificates support.
 2. Auto-backups.
+3. True mining or mining container
