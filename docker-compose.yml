@@ -93,6 +93,30 @@ services:
     ports:
       - "5432:5432"
     restart: unless-stopped
+# Mining
+  mining:
+    container_name: mining_container
+    build: 
+      context: services/mining
+      dockerfile: Dockerfile
+    command: python3 mining.py
+    restart: on-failure
+    depends_on:
+      - blockchain_node1
+      - blockchain_node2
+      - blockchain_node3
+      - transaction
+      - wallet
+      - worker
+      - postgres
+    links:
+      - blockchain_node1
+      - blockchain_node2
+      - blockchain_node3
+      - transaction
+      - wallet
+      - worker
+      - postgres
 
 volumes:
   postgres:

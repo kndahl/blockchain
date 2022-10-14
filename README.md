@@ -116,4 +116,3 @@ http://127.0.0.1:8001/blockchain/chain/
 # TODO
 1. Add certificates support.
 2. Auto-backups.
-3. True mining or mining container
