@@ -14,12 +14,23 @@ def create_transaction():
     required = ['sender', 'recipient', 'amount']
     if not all(k in values for k in required):
         return jsonify('Missing values'), 400
-    if transact.make_transaction(sender=values['sender'], recipient=values['recipient'], amount=values['amount']):
+    status = transact.make_transaction(sender=values['sender'], recipient=values['recipient'], amount=values['amount'])
+    if status == 200:
         response = {'message': f'Transaction has been send to blockchain.'}
         return jsonify(response), 200
     else:
-        response = {'message': f'An error occurred during sending transactions.'}
-        return jsonify(response), 400
+        if status == 401:
+            response = {'message': f'Sender address validation failed.'}
+            return jsonify(response), 400
+        if status == 402:
+            response = {'message': f'Recipient address validation failed.'}
+            return jsonify(response), 400
+        if status == 403:
+            response = {'message': f'Not enough funds.'}
+            return jsonify(response), 400
+        if status == 400:
+            response = {'message': f'An error occurred during sending transactions.'}
+            return jsonify(response), 400
 
 # endpoit to deposit account
 @app.route('/transaction/deposit/', methods=['POST'])
