@@ -1,4 +1,3 @@
-from crypt import methods
 import sys
 sys.path.append("..")
 

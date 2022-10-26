@@ -58,14 +58,7 @@ class Blockchain:
         return self.__get_prev_block__()['index'] + 1
 
     def mine_block(self) -> dict:
-        break_time = 5
         prev_block = self.__get_prev_block__()
-        # timer between blocks
-        prev_block_time = datetime.datetime.strptime(prev_block['timestamp'],"%Y-%m-%d %H:%M:%S.%f")
-        prev_block_timestamp = datetime.datetime.timestamp(prev_block_time)
-        current_timestamp = time.time()
-        if current_timestamp - prev_block_timestamp < break_time:
-            time.sleep(break_time - (current_timestamp - prev_block_timestamp)) # 5 sec
         prev_proof = prev_block['proof']
         index = len(self.chain) + 1
         proof = self.__proof_of_work__(prev_proof, index, self.current_transactions)

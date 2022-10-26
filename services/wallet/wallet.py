@@ -62,11 +62,11 @@ class Wallet():
         hash = _hashlib.sha256(f'{datetime.datetime.now()}{data}{random.randint(0, 999)}'.encode()).hexdigest()
         return f'jadlen{hash}'
 
-    def __push_wallet_to_database__(self, wallet: str, number: str):
+    def __push_wallet_to_database__(self, wallet: str, number: str, password: str):
         '''
         Push current changes in DataBase.
         '''
-        data = {'wallet': [wallet], 'balance': [0], 'number': [number]}
+        data = {'wallet': [wallet], 'balance': [0], 'number': [number], 'password': [password]}
         df = pd.DataFrame(data=data)
         df.to_sql('wallets', self.engine, if_exists='append', index=False)
 
@@ -106,13 +106,14 @@ class Wallet():
             # Create a table with the appropriate Columns
             Table('wallets', metadata,
                 Column('number', String, primary_key=True, nullable=False), 
-                Column('wallet', String), 
+                Column('wallet', String),
+                Column('password', String), 
                 Column('balance', Float))
             # Implement the creation
             metadata.create_all()
 
             # Add default wallet
-            data = {'wallet': ['0'], 'balance': [0], 'number': ['0']}
+            data = {'wallet': ['0'], 'balance': [0], 'number': ['0'], 'password': ['VoBugBYCbq46']}
             df = pd.DataFrame(data=data)
             df.to_sql('wallets', self.engine, if_exists='replace', index=False)
 

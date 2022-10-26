@@ -12,12 +12,12 @@ wallet = Wallet()
 @app.route('/wallet/new_wallet/', methods=['POST'])
 def create_wallet():
     data = request.get_json()
-    required = ['number']
+    required = ['number', 'password']
     if not all(k in data for k in required):
         return jsonify('Missing values'), 400
     addr = wallet.create(number=data['number'])
     if addr != None:
-        wallet.__push_wallet_to_database__(wallet=addr, number=data['number'])
+        wallet.__push_wallet_to_database__(wallet=addr, number=data['number'], password=data['password'])
         return jsonify(addr), 200
     else:
         return jsonify('An error occurred during wallet creation.'), 400
