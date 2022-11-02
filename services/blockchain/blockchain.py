@@ -72,6 +72,8 @@ class Blockchain:
         print(f'{bcolors.OKGREEN}Block {index} mined.{bcolors.ENDC}')
         # Notify transaction service
         self.__notify_trans__()
+        # Notify wallet service
+        self.__notify_wallets__()
         return block
 
     def resolve_conflicts(self):
@@ -187,5 +189,12 @@ class Blockchain:
         transact_service = 'http://transaction_service:7070'
         try:
             requests.get(f'{transact_service}/transaction/block_notice')
+        except Exception as e:
+            print(e)
+
+    def __notify_wallets__(self):
+        wallet_service = 'http://wallet_service:9090'
+        try:
+            requests.get(f'{wallet_service}/wallet/wallet_notice')
         except Exception as e:
             print(e)

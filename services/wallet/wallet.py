@@ -20,14 +20,14 @@ class Wallet():
         Returns address if unique and number wasnt register before.
         Return None if number was registered in DataBase.
         '''
-        wallets = self.__fetch_data__()
-        if self.__number_already_registered__(wallets=wallets, number=number):
+        # wallets = self.__fetch_data__()
+        if self.__number_already_registered__(wallets=self.wallet, number=number):
             print(f'{bcolors.WARNING}Number already registered in DataBase.{bcolors.ENDC}')
             return None
         else:
             while True:
                 self.addr = self.__address_generator__(data=number)
-                if not self.__address_is_unique__(wallets=wallets, addr=self.addr):
+                if not self.__address_is_unique__(wallets=self.wallet, addr=self.addr):
                     break
             print(f'{bcolors.OKGREEN}Wallet {self.addr} was created.{bcolors.ENDC}')
             return self.addr
@@ -45,6 +45,29 @@ class Wallet():
             self.__update_info__(sender=sender, recipient=recipient, amount=amount)
             self.__push_changes__()
         return True
+
+    def check_number(self, number):
+        # wallets = self.__fetch_data__()
+        return self.__number_already_registered__(wallets=self.wallet, number=number)
+
+    def check_password(self, number, password):
+        # wallets = self.__fetch_data__()
+        if self.__number_already_registered__(wallets=self.wallet, number=number):
+            true_psswrd = self.wallet.loc[self.wallet['number'] == number]['password'].item()
+            if true_psswrd == password:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def get_curr_balance(self, num, pswrd):
+        # wallets = self.__fetch_data__()
+        if self.__number_already_registered__(wallets=self.wallet, number=num): 
+            true_psswrd = self.wallet.loc[self.wallet['number'] == num]['password'].item()
+            if true_psswrd == pswrd:
+                return self.wallet.loc[self.wallet['number'] == num]['balance'].item()
+        return -1941
 
     def __address_is_unique__(self, wallets, addr):
         '''
@@ -69,6 +92,7 @@ class Wallet():
         data = {'wallet': [wallet], 'balance': [0], 'number': [number], 'password': [password]}
         df = pd.DataFrame(data=data)
         df.to_sql('wallets', self.engine, if_exists='append', index=False)
+        self.wallet = self.__fetch_data__()
 
     def __update_info__(self, sender, recipient, amount):
         '''
@@ -141,3 +165,7 @@ class Wallet():
         Returns False if doesnt exist.
         '''
         return number in wallets['number'].to_list()
+
+    def __block_found__(self):
+        self.wallet = self.__fetch_data__()
+        print(f'{bcolors.OKBLUE}Wallets were updated after a new block was mined.{bcolors.ENDC}')
